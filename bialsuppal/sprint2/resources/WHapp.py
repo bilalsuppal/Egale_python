@@ -1,29 +1,53 @@
+# lambda function to check the health of the web server
+
+values = dict()
+
 import urllib3
 import datetime
+from CloudWatch_PutData import AwsCloudwatch
+import constants as constant
 
-url="hicotex.com"
-
-def lambda_handler(event,context):
-    values=dict()
-    availability=getAvail();
-    latency=getLatency();
-    values.update({"availability":availability,"latency":latency})
+def lambda_handler(event, context):
+    
+    cw_client = AwsCloudwatch()
+    
+    for i in range(len(constant.site_url)):
+        avail = availbility(constant.site_url[i])
+        late = latency(constant.site_url[i])
+        
+        
+    
+        dimensions = [{'Name': 'Url','Value': constant.site_url[i]}]
+        
+        cw_client.cloudwatch_put_date(constant.namespace, constant.AvailbilityMetrics, dimensions, avail)
+        cw_client.cloudwatch_put_date(constant.namespace, constant.latencyMetrics, dimensions, late)
+    
+    
+    # print(avail,late)
+        values.update({f'{constant.site_url[i]}' : f'Availbility == > {avail} || Latency == > {late}'})
+        
     return values
 
-def getAvail():
-    http=urllib3.PoolManager()
-    response = http.request("Get",url)
-    if response.status==200:
-        return 1.0
+def availbility(Url):
+
+    http = urllib3.PoolManager()
+
+    response = http.request("GET", Url)
+
+    if response.status == 200:
+        return 1
     else:
-        return 0.0
+        return 0
     
-def getLatency():
-    http=urllib3.PoolManager()
+def latency(Url):
+    
+    http = urllib3.PoolManager()
     start = datetime.datetime.now()
-    response = http.request("Get", url)
-    response = http.request("Get", url)
-    end =datetime.datetime.now()
-    delta = end -start
-    latencySec = round(delta.microseconds*.00001,6)
+    response = http.request('GET', Url)
+    end = datetime.datetime.now()
+    
+    delta = end - start
+    
+    latencySec = round(delta.microseconds * .000001, 6)
+    
     return latencySec
