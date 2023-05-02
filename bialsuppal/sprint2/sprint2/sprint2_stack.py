@@ -8,6 +8,9 @@ from aws_cdk import (
     Stack,
     aws_iam as iam,
     aws_cloudwatch as cw_,
+    aws_sns as sns,
+    aws_sns_subscriptions as subscriptions,
+    aws_cloudwatch_actions as cw_actions,
     # aws_sqs as sqs,
 )
 from constructs import Construct
@@ -34,6 +37,10 @@ class Sprint2Stack(Stack):
         
         )
         rule.apply_removal_policy(RemovalPolicy.DESTROY)
+        
+        topic = sns.Topic(self, "WHNotification")
+        topic.add_subscription(subscriptions.EmailSubscription("bilal.hussain2332@gmail.com"))
+
         for i in range(len(constants.site_url)):
             dimensions={"Url":constants.site_url[i]}
             availability_metric=cw_.Metric(
@@ -48,6 +55,7 @@ class Sprint2Stack(Stack):
                 comparison_operator=cw_.ComparisonOperator.LESS_THAN_THRESHOLD
                 
             ) 
+            availability_alarm.add_alarm_action(cw_actions.SnsAction(topic))
 
             latency_metric=cw_.Metric(
                 metric_name = constants.latencyMetrics,
@@ -61,6 +69,9 @@ class Sprint2Stack(Stack):
                 comparison_operator=cw_.ComparisonOperator.GREATER_THAN_THRESHOLD
                 
             )
+            latency_alarm.add_alarm_action(cw_actions.SnsAction(topic))
+
+
     def create_lambda(self, id, asset, handler,lambda_role):
         return lambda_.Function(self, 
             id = id,
