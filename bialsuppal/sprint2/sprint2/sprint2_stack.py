@@ -34,33 +34,33 @@ class Sprint2Stack(Stack):
         
         )
         rule.apply_removal_policy(RemovalPolicy.DESTROY)
-        
-        dimensions={"Url":constants.site_url}
-        availability_metric=cw_.Metric(
-            metric_name = constants.AvailbilityMetrics,
-            namespace = constants.namespace,
-            dimensions_map= dimensions
-        )
-        availability_alarm=cw_.Alarm(self, "availabilityErrors",
-            metric=availability_metric,
-            evaluation_periods=1,
-            threshold=1,
-            comparison_operator=cw_.ComparisonOperator.LESS_THAN_THRESHOLD
-            
-        ) 
+        for i in range(len(constants.site_url)):
+            dimensions={"Url":constants.site_url[i]}
+            availability_metric=cw_.Metric(
+                metric_name = constants.AvailbilityMetrics,
+                namespace = constants.namespace,
+                dimensions_map= dimensions
+            )
+            availability_alarm=cw_.Alarm(self, f"availabilityErrors_{i}",
+                metric=availability_metric,
+                evaluation_periods=1,
+                threshold=1,
+                comparison_operator=cw_.ComparisonOperator.LESS_THAN_THRESHOLD
+                
+            ) 
 
-        latency_metric=cw_.Metric(
-            metric_name = constants.latencyMetrics,
-            namespace = constants.namespace,
-            dimensions_map= dimensions
-        )
-        latency_alarm=cw_.Alarm(self, "latencyErrors",
-            metric=latency_metric,
-            evaluation_periods=1,
-            threshold=0.5,
-            comparison_operator=cw_.ComparisonOperator.GREATER_THAN_THRESHOLD
-            
-        )
+            latency_metric=cw_.Metric(
+                metric_name = constants.latencyMetrics,
+                namespace = constants.namespace,
+                dimensions_map= dimensions
+            )
+            latency_alarm=cw_.Alarm(self, f"latencyErrors_{i}",
+                metric=latency_metric,
+                evaluation_periods=1,
+                threshold=0.5,
+                comparison_operator=cw_.ComparisonOperator.GREATER_THAN_THRESHOLD
+                
+            )
     def create_lambda(self, id, asset, handler,lambda_role):
         return lambda_.Function(self, 
             id = id,
