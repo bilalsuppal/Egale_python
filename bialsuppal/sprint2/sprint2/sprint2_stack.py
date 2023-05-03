@@ -12,6 +12,7 @@ from aws_cdk import (
     aws_sns_subscriptions as subscriptions,
     aws_cloudwatch_actions as cw_actions,
     # aws_sqs as sqs,
+    aws_dynamodb as db_,
 )
 from constructs import Construct
 from resources import constants as constants
@@ -25,7 +26,7 @@ class Sprint2Stack(Stack):
         fn = self.create_lambda("WHLambda", "./resources", "WHapp.lambda_handler",lambda_role)
         fn.apply_removal_policy(RemovalPolicy.DESTROY)
         schedule = events_.Schedule.rate(Duration.minutes(1))
-        
+        dbLambda=self.create_lambda("DBLambda", "./resources", "DBapp.lambda_handler",lambda_role)
         
         
         target = target_.LambdaFunction(handler=fn)
@@ -70,7 +71,10 @@ class Sprint2Stack(Stack):
                 
             )
             latency_alarm.add_alarm_action(cw_actions.SnsAction(topic))
-
+            
+            dbTable=self.create_dynamoDB_table()
+            dbTable.grant_read_write_data(dbLambda)
+            db_lambda_function.add_enviroment("table_name",db_table.table_name)
 
     def create_lambda(self, id, asset, handler,lambda_role):
         return lambda_.Function(self, 
@@ -88,6 +92,13 @@ class Sprint2Stack(Stack):
             managed_policies=[iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchFullAccess")]
         ) 
 
+    def create_dynamodb_table(self):
+        table = db_.Table(self, "AlarmTable",
+            partition_key=db_.Attribute(name="id", type=db_.AttributeType.STRING),
+            removal_policy=RemovalPolicy.DESTROY,
+            sort_key= .....<timestamp>
+        return table
+        )
 
         # The code that defines your stack goes here
 
